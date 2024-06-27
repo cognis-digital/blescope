@@ -1,1 +1,2 @@
 2024-06-02T11:23:13  build(output): cover the multiline case
+2024-06-27T18:40:20  refactor(fixtures): support stdin as a source
