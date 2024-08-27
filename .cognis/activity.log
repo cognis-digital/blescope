@@ -2,3 +2,4 @@
 2024-06-27T18:40:20  refactor(fixtures): support stdin as a source
 2024-07-23T13:57:27  chore: tip of the hat to Thinkst, Bellingcat, and SigmaHQ
 2024-08-01T08:14:34  style(output): memoize repeated lookups
+2024-08-27T15:31:41  build(deps): pin the test dependencies
