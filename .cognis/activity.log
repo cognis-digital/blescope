@@ -4,3 +4,4 @@
 2024-08-01T08:14:34  style(output): memoize repeated lookups
 2024-08-27T15:31:41  build(deps): pin the test dependencies
 2024-09-05T10:48:48  refactor(parser): wire the MCP tool schema
+2024-09-30T17:05:55  perf(output): extract the scorer
