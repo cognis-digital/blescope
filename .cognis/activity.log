@@ -5,3 +5,4 @@
 2024-08-27T15:31:41  build(deps): pin the test dependencies
 2024-09-05T10:48:48  refactor(parser): wire the MCP tool schema
 2024-09-30T17:05:55  perf(output): extract the scorer
+2024-10-08T12:22:02  style(deps): add a fast path for the common case
