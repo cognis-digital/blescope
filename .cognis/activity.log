@@ -10,3 +10,4 @@
 2024-11-30T14:56:16  fix(fixtures): add usage examples to help
 2024-12-09T09:13:23  test(ci): respect .gitignore when walking
 2025-01-04T16:30:30  style(scan): assert exit codes in tests
+2025-01-11T11:47:37  build(cache): fix off-by-one in line numbers
