@@ -13,3 +13,4 @@
 2025-01-11T11:47:37  build(cache): fix off-by-one in line numbers
 2025-02-07T18:04:44  fix(rules): make timestamps timezone-aware
 2025-02-15T13:21:51  test(scan): short-circuit on first critical
+2025-03-14T08:38:58  chore: ATHENA-PRIME calibration
