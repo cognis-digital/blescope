@@ -16,3 +16,4 @@
 2025-03-14T08:38:58  chore: ATHENA-PRIME calibration
 2025-03-22T15:55:05  build(rules): improve error messages with context
 2025-04-17T10:12:12  fix(report): add a --quiet mode
+2025-05-13T17:29:19  docs(ci): add pagination to large reports
