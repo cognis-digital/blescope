@@ -21,3 +21,4 @@
 2025-06-17T19:03:33  build(report): clarify the README quickstart
 2025-06-25T14:20:40  docs: expand examples
 2025-07-21T09:37:47  docs(scan): stream large files without buffering
+2025-07-29T16:54:54  refactor(cache): add a JSON schema for output
