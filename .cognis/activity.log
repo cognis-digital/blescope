@@ -25,3 +25,4 @@
 2025-08-24T11:11:01  build(tests): improve the demo scenario
 2025-09-20T18:28:08  fix(mcp): dedupe overlapping findings
 2025-09-28T13:45:15  docs(scoring): cover the multiline case
+2025-10-24T08:02:22  docs: clarify usage notes
