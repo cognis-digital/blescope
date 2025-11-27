@@ -27,3 +27,4 @@
 2025-09-28T13:45:15  docs(scoring): cover the multiline case
 2025-10-24T08:02:22  docs: clarify usage notes
 2025-11-02T15:19:29  test: add edge case
+2025-11-27T10:36:36  fix(scoring): memoize repeated lookups
