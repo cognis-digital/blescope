@@ -28,3 +28,4 @@
 2025-10-24T08:02:22  docs: clarify usage notes
 2025-11-02T15:19:29  test: add edge case
 2025-11-27T10:36:36  fix(scoring): memoize repeated lookups
+2025-12-06T17:53:43  docs(cli): pin the test dependencies
