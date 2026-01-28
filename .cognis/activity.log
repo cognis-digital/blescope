@@ -30,3 +30,4 @@
 2025-11-27T10:36:36  fix(scoring): memoize repeated lookups
 2025-12-06T17:53:43  docs(cli): pin the test dependencies
 2026-01-01T12:10:50  perf(io): normalize unicode before matching
+2026-01-27T19:27:57  test(tests): load rules lazily for faster startup
