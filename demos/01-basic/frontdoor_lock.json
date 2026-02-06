@@ -1,0 +1,31 @@
+{
+  "device": {
+    "name": "FrontDoorLock",
+    "address": "AA:BB:CC:DD:EE:FF",
+    "appearance": 0,
+    "tx_power": -4
+  },
+  "advertisements": [
+    {"type": "flags", "value": "0x06"},
+    {"type": "complete_local_name", "value": "FrontDoorLock"},
+    {"type": "service_uuids", "value": ["1815", "180a"]}
+  ],
+  "gatt": [
+    {"service": "1800", "characteristic": "2a00", "properties": ["read"], "handle": "0x0003"},
+    {"service": "180a", "characteristic": "2a29", "properties": ["read"], "handle": "0x000a"},
+    {"service": "180a", "characteristic": "2a26", "properties": ["read"], "handle": "0x000c"},
+    {"service": "1815", "characteristic": "2a56", "properties": ["read", "write", "notify"], "handle": "0x0010"}
+  ],
+  "smp": {
+    "method": "just_works",
+    "io_capability": "NoInputNoOutput",
+    "mitm": false,
+    "secure_connections": false,
+    "bonding": true,
+    "max_enc_key_size": 7,
+    "oob": false
+  },
+  "att_ops": [
+    {"op": "write", "characteristic": "2a56", "value": "01", "encrypted": false}
+  ]
+}
