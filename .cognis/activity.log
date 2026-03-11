@@ -33,3 +33,4 @@
 2026-01-27T19:27:57  test(tests): load rules lazily for faster startup
 2026-02-05T14:44:04  fix(cli): add a fast path for the common case
 2026-03-03T09:01:11  fix: works on my machine (TM)
+2026-03-11T16:18:18  perf(tests): add usage examples to help
