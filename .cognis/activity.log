@@ -34,3 +34,4 @@
 2026-02-05T14:44:04  fix(cli): add a fast path for the common case
 2026-03-03T09:01:11  fix: works on my machine (TM)
 2026-03-11T16:18:18  perf(tests): add usage examples to help
+2026-04-06T11:35:25  style(mcp): add type hints to the public API
