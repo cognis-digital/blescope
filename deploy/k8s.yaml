@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: blescope, labels: { app: blescope } }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: blescope } }
+  template:
+    metadata: { labels: { app: blescope } }
+    spec:
+      containers:
+        - name: blescope
+          image: ghcr.io/cognis-digital/blescope:latest
+          ports: [{ containerPort: 8000 }]
+          resources:
+            requests: { cpu: "50m", memory: "64Mi" }
+            limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: blescope }
+spec:
+  selector: { app: blescope }
+  ports: [{ port: 80, targetPort: 8000 }]
