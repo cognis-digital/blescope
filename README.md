@@ -16,7 +16,7 @@
 </div>
 
 ```bash
-pip install cognis-blescope
+pip install "git+https://github.com/cognis-digital/blescope.git"
 blescope scan .            # → prioritized findings in seconds
 ```
 
@@ -50,7 +50,7 @@ Smart-lock and wearable teardown culture — 'this $200 lock pairs Just-Works an
 ## Quick start
 
 ```bash
-pip install cognis-blescope
+pip install "git+https://github.com/cognis-digital/blescope.git"
 blescope --version
 blescope scan .                       # scan current project
 blescope scan . --format json         # machine-readable
