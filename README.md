@@ -16,9 +16,15 @@
 </div>
 
 ```bash
-pip install cognis-blescope
+pip install "git+https://github.com/cognis-digital/blescope.git"
 blescope scan .            # → prioritized findings in seconds
 ```
+
+<!-- cognis:layman:start -->
+## What is this?
+
+blescope is a security testing tool for Bluetooth Low Energy (BLE) devices — things like smart locks, fitness trackers, and wireless sensors. You point it at a saved recording of Bluetooth traffic, and it tells you in plain language whether the device is using insecure pairing, weak encryption, or allows commands to be sent without any authentication. It is built for developers and security researchers who need a fast, repeatable way to catch Bluetooth vulnerabilities before a product ships or as part of an automated test pipeline.
+<!-- cognis:layman:end -->
 
 ## Contents
 
@@ -47,10 +53,56 @@ Smart-lock and wearable teardown culture — 'this $200 lock pairs Just-Works an
 <div align="right"><a href="#top">↑ back to top</a></div>
 
 <a name="quick-start"></a>
+<!-- cognis:domains:start -->
+## Domains
+
+**Primary domain:** Cyber & Security  ·  **JTF MERIDIAN division:** NULLBYTE · SPECTER
+
+**Topics:** `cognis` `security` `infosec` `cybersecurity` `blue-team`
+
+Part of the **Cognis Neural Suite** — 300+ source-available tools organized across 12 domains under the JTF MERIDIAN command structure. See the [suite on GitHub](https://github.com/cognis-digital) and [jtf-meridian](https://github.com/cognis-digital/jtf-meridian) for how the pieces fit together.
+<!-- cognis:domains:end -->
+
+<!-- cognis:install:start -->
+## Install
+
+`blescope` is source-available (not published to PyPI) — every method below installs
+straight from GitHub. Pick whichever you prefer; the one-line scripts auto-detect
+the best tool available on your machine.
+
+**One-liner (Linux / macOS):**
+```sh
+curl -fsSL https://raw.githubusercontent.com/cognis-digital/blescope/HEAD/install.sh | sh
+```
+
+**One-liner (Windows PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/cognis-digital/blescope/HEAD/install.ps1 | iex
+```
+
+**Or install manually — any one of:**
+```sh
+pipx install "git+https://github.com/cognis-digital/blescope.git"     # isolated (recommended)
+uv tool install "git+https://github.com/cognis-digital/blescope.git"  # uv
+pip install "git+https://github.com/cognis-digital/blescope.git"      # pip
+```
+
+**From source:**
+```sh
+git clone https://github.com/cognis-digital/blescope.git
+cd blescope && pip install .
+```
+
+Then run:
+```sh
+blescope --help
+```
+<!-- cognis:install:end -->
+
 ## Quick start
 
 ```bash
-pip install cognis-blescope
+pip install "git+https://github.com/cognis-digital/blescope.git"
 blescope --version
 blescope scan .                       # scan current project
 blescope scan . --format json         # machine-readable
