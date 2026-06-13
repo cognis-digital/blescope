@@ -20,6 +20,33 @@ pip install cognis-blescope
 blescope scan .            # → prioritized findings in seconds
 ```
 
+## Usage — step by step
+
+`blescope` decodes a BLE GATT capture, fingerprints the device profile, and asserts on insecure pairing/access.
+
+1. **Install** (Python 3.10+):
+   ```bash
+   pip install -e .            # or: pipx install blescope
+   ```
+2. **Scan a capture** (human-readable report):
+   ```bash
+   blescope scan demos/01-basic/frontdoor_lock.json
+   ```
+3. **Filter to actionable findings** at/above a severity:
+   ```bash
+   blescope scan capture.json --min-severity medium
+   ```
+4. **Read the output** as JSON for piping / dashboards:
+   ```bash
+   blescope scan capture.json --format json | jq '.findings'
+   cat capture.json | blescope scan -      # stdin
+   ```
+5. **Gate CI on insecure devices** — exit `1` when any actionable finding is reported, `0` when clean, `2` on usage error:
+   ```yaml
+   - run: pip install -e . && blescope scan capture.json   # non-zero fails the job
+   ```
+
+
 ## Contents
 
 - [Why blescope?](#why) · [Features](#features) · [Quick start](#quick-start) · [Example](#example) · [Architecture](#architecture) · [AI stack](#ai-stack) · [How it compares](#how-it-compares) · [Integrations](#integrations) · [Install anywhere](#install-anywhere) · [Related](#related) · [Contributing](#contributing)
