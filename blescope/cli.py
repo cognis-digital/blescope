@@ -150,11 +150,15 @@ def main(argv: Optional[list[str]] = None) -> int:
             return 2
         try:
             capture = load_capture(text)
-        except ValueError as exc:
+        except (ValueError, TypeError) as exc:
             print(f"error: invalid capture: {exc}", file=sys.stderr)
             return 2
 
-        result = analyze_capture(capture)
+        try:
+            result = analyze_capture(capture)
+        except (TypeError, ValueError) as exc:
+            print(f"error: analysis failed: {exc}", file=sys.stderr)
+            return 2
 
         if args.format == "json":
             print(json.dumps(result.to_dict(), indent=2))

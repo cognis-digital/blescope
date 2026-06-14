@@ -183,6 +183,8 @@ def load_capture(text: str) -> dict[str, Any]:
         smp.method: just_works
         smp.mitm: false
     """
+    if not isinstance(text, str):
+        raise TypeError(f"capture text must be a str, got {type(text).__name__}")
     text = text.strip()
     if not text:
         return {}
@@ -355,6 +357,8 @@ def audit_pairing(capture: dict[str, Any], profile: str) -> list[Finding]:
 
     # Plaintext writes to sensitive (actuation) characteristics.
     for op in capture.get("att_ops", []) or []:
+        if not isinstance(op, dict):
+            continue
         if str(op.get("op", "")).lower() not in ("write", "write_command", "write_request"):
             continue
         char = _normalize_uuid(op.get("characteristic", "")) if op.get("characteristic") else ""
@@ -378,7 +382,8 @@ def audit_pairing(capture: dict[str, Any], profile: str) -> list[Finding]:
         if not char:
             continue
         cn = _normalize_uuid(char)
-        props = {str(p).lower() for p in (entry.get("properties") or [])}
+        raw_props = entry.get("properties")
+        props = {str(p).lower() for p in (raw_props if isinstance(raw_props, (list, tuple)) else [])}
         if cn in _SENSITIVE_CHARACTERISTICS and "write" in props and not (
             "authenticated_write" in props or "signed_write" in props
         ):
@@ -399,6 +404,11 @@ def audit_pairing(capture: dict[str, Any], profile: str) -> list[Finding]:
 
 def analyze_capture(capture: dict[str, Any]) -> AnalysisResult:
     """Run the full pipeline: decode, fingerprint, audit."""
+    if not isinstance(capture, dict):
+        raise TypeError(
+            f"capture must be a dict (got {type(capture).__name__}); "
+            "use load_capture() to parse raw text"
+        )
     profile, confidence = fingerprint_profile(capture)
 
     services: list[dict[str, Any]] = []
@@ -417,10 +427,12 @@ def analyze_capture(capture: dict[str, Any]) -> AnalysisResult:
             n = _normalize_uuid(char)
             if n not in seen_char:
                 seen_char.add(n)
+                raw_props = entry.get("properties")
+                props_iter = raw_props if isinstance(raw_props, (list, tuple)) else []
                 characteristics.append({
                     "uuid": n,
                     "name": decode_uuid(n, "characteristic"),
-                    "properties": sorted({str(p).lower() for p in (entry.get("properties") or [])}),
+                    "properties": sorted({str(p).lower() for p in props_iter}),
                 })
 
     findings = audit_pairing(capture, profile)
