@@ -1,0 +1,64 @@
+name: ports
+on: [push, pull_request]
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ports/go
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+      - run: go vet ./...
+      - run: go test -v ./...
+      - run: go build -o /tmp/blescope-go .
+      - name: smoke
+        run: |
+          /tmp/blescope-go ../../demos/01-basic/frontdoor_lock.json && exit 1 || true
+
+  rust:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ports/rust
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test --verbose
+      - run: cargo build --release
+      - name: smoke
+        run: |
+          ./target/release/blescope ../../demos/01-basic/frontdoor_lock.json && exit 1 || true
+
+  typescript:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ports/typescript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install
+      - name: typecheck
+        run: npx tsc --noEmit
+      - name: test
+        run: node --test --experimental-strip-types
+
+  javascript:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ports/javascript
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test

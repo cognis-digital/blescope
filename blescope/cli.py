@@ -26,6 +26,15 @@ from typing import Optional
 
 from . import TOOL_NAME, TOOL_VERSION
 from .core import analyze_capture, load_capture, AnalysisResult, SEVERITY_ORDER
+from .active import (
+    ActiveConfig,
+    ActiveResult,
+    MockScanner,
+    NullScanner,
+    ScopeError,
+    load_allowlist,
+    run_active,
+)
 
 _SEV_LABEL = {
     "critical": "CRIT",
@@ -122,7 +131,112 @@ def _build_parser() -> argparse.ArgumentParser:
         help=("minimum severity that counts as a failure for the exit code "
               "(default: low). 'info' never fails."),
     )
+
+    live = sub.add_parser(
+        "scan-live",
+        help="ACTIVE: pull live GATT from authorized in-scope BLE devices",
+        description=(
+            "AUTHORIZED USE ONLY. Active scanning is OFF by default and only "
+            "probes devices you own or are explicitly permitted to test. "
+            "Requires --authorized AND a non-empty --target-allowlist; every "
+            "probe is rate-limited and out-of-scope devices are skipped."),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    live.add_argument(
+        "--authorized", action="store_true",
+        help="confirm you own / are permitted to test the target devices (REQUIRED)",
+    )
+    live.add_argument(
+        "--target-allowlist", default=None,
+        help=("comma-separated BLE addresses OR a path to a file of addresses "
+              "(one per line) that are in scope (REQUIRED, non-empty)"),
+    )
+    live.add_argument(
+        "--rate", type=float, default=1.0,
+        help="maximum active probes per second (default: 1.0)",
+    )
+    live.add_argument(
+        "--demo", action="store_true",
+        help=("use the bundled MockScanner fixtures instead of a real radio "
+              "(safe offline demonstration of the active pipeline)"),
+    )
+    live.add_argument(
+        "--format", choices=["table", "json"], default="table",
+        help="output format (default: table)",
+    )
     return parser
+
+
+_DEMO_DEVICES = [
+    {"address": "AA:BB:CC:DD:EE:01", "name": "DemoLock"},
+    {"address": "AA:BB:CC:DD:EE:02", "name": "RoguePhone"},
+]
+_DEMO_CAPTURES = {
+    "AA:BB:CC:DD:EE:01": {
+        "device": {"name": "DemoLock", "address": "AA:BB:CC:DD:EE:01"},
+        "gatt": [{"service": "1815", "characteristic": "2a56",
+                  "properties": ["read", "write", "notify"]}],
+        "smp": {"method": "just_works", "io_capability": "NoInputNoOutput",
+                "mitm": False, "secure_connections": False, "max_enc_key_size": 7},
+        "att_ops": [{"op": "write", "characteristic": "2a56",
+                     "value": "01", "encrypted": False}],
+    },
+}
+
+
+def _render_active_table(result: ActiveResult) -> str:
+    lines = ["=" * 60,
+             f"BLESCOPE active report  ({TOOL_NAME} {TOOL_VERSION})",
+             "=" * 60,
+             f"Scanned (in scope) : {len(result.scanned)}",
+             f"Skipped (out of scope): {len(result.skipped_out_of_scope)}"]
+    for addr in result.skipped_out_of_scope:
+        lines.append(f"  - skipped {addr} (not in allowlist)")
+    lines.append("")
+    for addr, r in result.results.items():
+        lines.append(f"[{addr}] profile={r.profile} verdict="
+                     f"{'INSECURE' if r.insecure() else 'OK'} "
+                     f"worst={r.worst_severity or 'none'}")
+        for f in r.findings:
+            lines.append(f"    [{_SEV_LABEL.get(f.severity, f.severity.upper())}] "
+                         f"{f.id}: {f.title}")
+    lines.append("-" * 60)
+    verdict = "INSECURE" if result.to_dict()["insecure"] else "OK"
+    lines.append(f"VERDICT: {verdict}")
+    lines.append("-" * 60)
+    return "\n".join(lines)
+
+
+def _run_scan_live(args) -> int:
+    try:
+        allowlist = load_allowlist(args.target_allowlist)
+        config = ActiveConfig(
+            authorized=args.authorized,
+            allowlist=allowlist,
+            rate=args.rate,
+        )
+        config.ensure_gated()
+    except ScopeError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    if args.demo:
+        scanner = MockScanner(_DEMO_DEVICES, _DEMO_CAPTURES)
+    else:
+        scanner = NullScanner()
+
+    try:
+        result = run_active(config, scanner)
+    except ScopeError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+
+    if args.format == "json":
+        print(json.dumps(result.to_dict(), indent=2))
+    else:
+        print(_render_active_table(result))
+
+    return 1 if result.to_dict()["insecure"] else 0
 
 
 def _exit_code(result: AnalysisResult, min_severity: str) -> int:
@@ -142,6 +256,9 @@ def main(argv: Optional[list[str]] = None) -> int:
     if args.command is None:
         parser.print_help()
         return 2
+
+    if args.command == "scan-live":
+        return _run_scan_live(args)
 
     if args.command == "scan":
         try:

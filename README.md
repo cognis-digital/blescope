@@ -17,7 +17,7 @@
 
 ```bash
 pip install cognis-blescope
-blescope scan .            # → prioritized findings in seconds
+blescope scan capture.json    # → prioritized findings in seconds (passive, offline)
 ```
 
 ## Usage — step by step
@@ -46,6 +46,52 @@ blescope scan .            # → prioritized findings in seconds
    ```yaml
    - run: pip install -e . && blescope scan capture.json   # non-zero fails the job
    ```
+
+## Passive (default) vs Active (authorization-gated)
+
+`blescope` has two modes. **Passive is the default and the safe one.**
+
+### Passive — `blescope scan` (offline, no radio, no network)
+Analyzes a capture **you provide** (a JSON or text GATT capture, a saved sniff,
+an SBOM-style device inventory). It never opens a radio or contacts anything.
+This is what runs in CI.
+
+```bash
+blescope scan capture.json                 # offline analysis of provided input
+cat capture.json | blescope scan -         # stdin
+```
+
+### Active — `blescope scan-live` (live device pull) ⚠️ AUTHORIZED USE ONLY
+
+> **⚠️ AUTHORIZED USE ONLY.** Active mode pulls *live* GATT data from a BLE
+> device/adapter. Only probe devices **you own** or have **explicit written
+> permission** to test. Active scanning of third-party devices may be illegal.
+
+Active mode is engineered as a hard opt-in and is **OFF by default**:
+
+- **`--authorized` is mandatory** — without it the command refuses (exit 2).
+- **`--target-allowlist` is mandatory and non-empty** — a comma list of BLE
+  addresses, or a path to a file of addresses, that are in scope. Devices not in
+  the allowlist are **skipped, never probed**.
+- **`--rate` rate-limits** every probe (default `1.0`/s; a token bucket paces it).
+- A loud **"AUTHORIZED USE ONLY" banner** prints before any active operation.
+- With no real BLE backend wired in, blescope **refuses rather than fabricate**
+  data. Use `--demo` to exercise the active pipeline offline against bundled
+  fixtures (no radio, no network).
+
+```bash
+# Refuses — active is off by default:
+blescope scan-live --target-allowlist AA:BB:CC:DD:EE:01           # exit 2
+
+# Authorized, scoped, rate-limited demonstration against bundled fixtures:
+blescope scan-live --authorized \
+                   --target-allowlist AA:BB:CC:DD:EE:01 \
+                   --rate 1 --demo --format json
+```
+
+A real adapter backend (e.g. a `bleak`-based `Scanner`) is injected by the
+operator; the bundled default never invents device data, and the test suite uses
+only a `MockScanner`/localhost fixtures — never a real external host.
 
 ## Demos
 
@@ -92,9 +138,11 @@ Smart-lock and wearable teardown culture — 'this $200 lock pairs Just-Works an
 - ✅ Audit SMP pairing (Just Works, LE Legacy, weak key, NoInputNoOutput, debug keys, missing SMP)
 - ✅ Flag plaintext / unauthenticated writes to control characteristics
 - ✅ `table` · `json` · **`sarif`** output (SARIF 2.1.0 for GitHub code-scanning)
+- ✅ Privacy & bonding checks (static/public address tracking, unauthenticated bonded LTK)
 - ✅ CI-ready exit codes with a `--min-severity` gate
+- ✅ **Passive by default** (offline); optional **authorization-gated active** live pull (`scan-live`, OFF by default, scope-enforced, rate-limited)
 - ✅ Runs on Linux/macOS/Windows · Docker · devcontainer
-- ✅ Ports in Python, JavaScript, Go, and Rust (`ports/`)
+- ✅ Ports in Python, JavaScript, TypeScript, Go, and Rust (`ports/`) — passive core, CI-built
 
 <div align="right"><a href="#top">↑ back to top</a></div>
 
@@ -104,9 +152,9 @@ Smart-lock and wearable teardown culture — 'this $200 lock pairs Just-Works an
 ```bash
 pip install cognis-blescope
 blescope --version
-blescope scan .                       # scan current project
-blescope scan . --format json         # machine-readable
-blescope scan . --fail-on high        # CI gate (non-zero exit)
+blescope scan capture.json                       # passive: analyze a capture
+blescope scan capture.json --format json         # machine-readable
+blescope scan capture.json --min-severity high   # CI gate (non-zero exit)
 ```
 
 <div align="right"><a href="#top">↑ back to top</a></div>

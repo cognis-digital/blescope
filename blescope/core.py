@@ -327,6 +327,21 @@ def _parse_text_capture(text: str) -> dict[str, Any]:
     return cap
 
 
+def _is_random_private(addr: str) -> bool:
+    """True if a BLE address looks like a resolvable/non-resolvable private addr.
+
+    Private random addresses have the two most-significant bits of the most
+    significant byte set to 0b01 (non-resolvable) or 0b10 (resolvable). Public
+    and static-random addresses do not vary, so they are trackable.
+    """
+    try:
+        msb = int(addr.split(":")[0], 16)
+    except (ValueError, IndexError):
+        return False
+    top = msb >> 6
+    return top in (0b01, 0b10)
+
+
 def _coerce(val: str) -> Any:
     low = val.lower()
     if low in ("true", "yes", "on"):
@@ -438,6 +453,18 @@ def audit_pairing(capture: dict[str, Any], profile: str) -> list[Finding]:
                         "link encryption is trivially decryptable by any observer."),
                 evidence={"debug_keys": True},
             ))
+        # Bonding without authenticated pairing leaves a reusable, weak LTK.
+        if smp.get("bonding") and not mitm and method in (
+                "just_works", "justworks", ""):
+            findings.append(Finding(
+                id="SMP-WEAKBOND",
+                severity="medium",
+                title="Bonding stores an unauthenticated long-term key",
+                detail=("The peers bond (persist an LTK) after Just Works "
+                        "pairing, so a key with no MITM protection is reused "
+                        "across reconnections."),
+                evidence={"bonding": True, "mitm": mitm, "method": method or "unspecified"},
+            ))
     else:
         findings.append(Finding(
             id="SMP-NONE",
@@ -446,6 +473,20 @@ def audit_pairing(capture: dict[str, Any], profile: str) -> list[Finding]:
             detail=("The capture contains no SMP exchange; the link may operate "
                     "entirely unencrypted (Security Mode 1 Level 1)."),
             evidence={},
+        ))
+
+    # Static (non-resolvable) device address harms privacy and aids tracking.
+    addr = str(capture.get("device", {}).get("address", "")).upper().replace("-", ":")
+    addr_type = str(capture.get("device", {}).get("address_type", "")).lower()
+    if addr and addr_type in ("public", "static", "static_random") and not _is_random_private(addr):
+        findings.append(Finding(
+            id="PRIV-STATIC-ADDR",
+            severity="low",
+            title="Static/public device address enables tracking",
+            detail=("The device advertises with a fixed (public or static) "
+                    "address rather than a resolvable private address, so it "
+                    "can be tracked across time and place."),
+            evidence={"address": addr, "address_type": addr_type or "public"},
         ))
 
     # Plaintext writes to sensitive (actuation) characteristics.

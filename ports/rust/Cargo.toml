@@ -1,9 +1,16 @@
 [package]
 name = "blescope"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 license = "LicenseRef-COCL-1.0"
 
 [[bin]]
 name = "blescope"
 path = "src/main.rs"
+
+[lib]
+name = "blescope"
+path = "src/lib.rs"
+
+[dependencies]
+serde_json = "1"
