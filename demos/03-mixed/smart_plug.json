@@ -1,0 +1,31 @@
+{
+  "device": {
+    "name": "WattWise Plug Mini",
+    "address": "50:8C:B1:65:43:21",
+    "appearance": 0,
+    "tx_power": 0
+  },
+  "advertisements": [
+    {"type": "flags", "value": "0x06"},
+    {"type": "complete_local_name", "value": "WattWise Plug Mini"},
+    {"type": "service_uuids", "value": ["1815", "180a"]}
+  ],
+  "gatt": [
+    {"service": "1800", "characteristic": "2a00", "properties": ["read"], "handle": "0x0003"},
+    {"service": "180a", "characteristic": "2a29", "properties": ["read"], "handle": "0x000a"},
+    {"service": "180a", "characteristic": "2a26", "properties": ["read"], "handle": "0x000c"},
+    {"service": "1815", "characteristic": "2a56", "properties": ["read", "write", "notify"], "handle": "0x0010"}
+  ],
+  "smp": {
+    "method": "passkey_entry",
+    "io_capability": "DisplayOnly",
+    "mitm": true,
+    "secure_connections": true,
+    "bonding": true,
+    "max_enc_key_size": 16,
+    "oob": false
+  },
+  "att_ops": [
+    {"op": "write", "characteristic": "2a56", "value": "01", "encrypted": false}
+  ]
+}

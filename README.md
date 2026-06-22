@@ -36,15 +36,38 @@ blescope scan .            # → prioritized findings in seconds
    ```bash
    blescope scan capture.json --min-severity medium
    ```
-4. **Read the output** as JSON for piping / dashboards:
+4. **Read the output** as JSON for piping / dashboards, or **SARIF** for code-scanning:
    ```bash
    blescope scan capture.json --format json | jq '.findings'
+   blescope scan capture.json --format sarif > blescope.sarif   # GitHub code-scanning
    cat capture.json | blescope scan -      # stdin
    ```
 5. **Gate CI on insecure devices** — exit `1` when any actionable finding is reported, `0` when clean, `2` on usage error:
    ```yaml
    - run: pip install -e . && blescope scan capture.json   # non-zero fails the job
    ```
+
+## Demos
+
+Ten worked scenarios live in [`demos/`](demos/) — each is a real-format capture plus a `SCENARIO.md` (where the data came from, the exact run command, and how to act). Every demo is exercised by the test suite, so they always fire.
+
+| Demo | Profile | Headline finding |
+|---|---|---|
+| [`01-basic`](demos/01-basic/) | smart_lock | Just Works + plaintext unlock write (**critical**) |
+| [`02-clean`](demos/02-clean/) | fitness_tracker | clean baseline — zero findings, exit 0 |
+| [`03-mixed`](demos/03-mixed/) | smart_lock | well-paired plug, leaky control characteristic |
+| [`04-debug-keys`](demos/04-debug-keys/) | smart_lock | factory **debug keys** mask strong pairing |
+| [`05-fitness-legacy`](demos/05-fitness-legacy/) | fitness_tracker | LE Legacy Pairing (no Secure Connections) |
+| [`06-hid-keyboard`](demos/06-hid-keyboard/) | hid_peripheral | `NoInputNoOutput` forces Just Works on a keyboard |
+| [`07-no-smp-sensor`](demos/07-no-smp-sensor/) | environmental_sensor | no SMP exchange — unencrypted link |
+| [`08-beacon-open`](demos/08-beacon-open/) | beacon | proximity beacon left connectable + open |
+| [`09-secure-lock`](demos/09-secure-lock/) | smart_lock | a lock done right — clean reference |
+| [`10-text-relay`](demos/10-text-relay/) | smart_lock | tolerant **text-capture** format, full insecure stack |
+
+```bash
+python -m blescope scan demos/04-debug-keys/smartbulb_debugkey.json
+python -m blescope scan demos/09-secure-lock/secure_deadbolt.json   # exits 0
+```
 
 
 ## Contents
@@ -63,11 +86,13 @@ Smart-lock and wearable teardown culture — 'this $200 lock pairs Just-Works an
 <a name="features"></a>
 ## Features
 
-- ✅ Decode Uuid
-- ✅ Load Capture
-- ✅ Fingerprint Profile
-- ✅ Audit Pairing
-- ✅ Analyze Capture
+- ✅ Decode GATT service/characteristic UUIDs (16-bit + Bluetooth-base 128-bit)
+- ✅ Load captures from JSON **or** a tolerant `key: value` text form (and stdin)
+- ✅ Fingerprint device profile (smart_lock · fitness_tracker · beacon · hid_peripheral · environmental_sensor)
+- ✅ Audit SMP pairing (Just Works, LE Legacy, weak key, NoInputNoOutput, debug keys, missing SMP)
+- ✅ Flag plaintext / unauthenticated writes to control characteristics
+- ✅ `table` · `json` · **`sarif`** output (SARIF 2.1.0 for GitHub code-scanning)
+- ✅ CI-ready exit codes with a `--min-severity` gate
 - ✅ Runs on Linux/macOS/Windows · Docker · devcontainer
 - ✅ Ports in Python, JavaScript, Go, and Rust (`ports/`)
 
@@ -90,11 +115,23 @@ blescope scan . --fail-on high        # CI gate (non-zero exit)
 ## Example
 
 ```text
-$ blescope scan .
-  [HIGH    ] BLE-001  example finding             (./src/app.py)
-  [MEDIUM  ] BLE-002  another signal              (./config.yaml)
+$ blescope scan demos/01-basic/frontdoor_lock.json
+============================================================
+BLESCOPE report  (blescope 0.6.0)
+============================================================
+Device       : FrontDoorLock  [AA:BB:CC:DD:EE:FF]
+Profile      : smart_lock  (confidence 100%)
 
-  2 findings · risk score 5 · 38ms
+Findings (6):
+  [CRIT] SMP-JUSTWORKS: Just Works pairing (no MITM protection)
+  [CRIT] ATT-PLAINTEXT-CTRL: Plaintext write to control characteristic 2a56
+  [HIGH] SMP-LEGACY: LE Legacy Pairing (no Secure Connections)
+  [HIGH] SMP-WEAKKEY: Short encryption key (7 bytes)
+  [HIGH] GATT-UNAUTH-WRITE: Unauthenticated writable control characteristic 2a56
+  [MED ] SMP-IOCAP: NoInputNoOutput I/O capability forces Just Works
+------------------------------------------------------------
+VERDICT: INSECURE   (worst severity: critical)
+------------------------------------------------------------
 ```
 
 <div align="right"><a href="#top">↑ back to top</a></div>

@@ -1,0 +1,31 @@
+{
+  "device": {
+    "name": "PulseFit Band 3",
+    "address": "D4:36:39:AA:BB:CC",
+    "appearance": 833,
+    "tx_power": -8
+  },
+  "advertisements": [
+    {"type": "flags", "value": "0x06"},
+    {"type": "complete_local_name", "value": "PulseFit Band 3"},
+    {"type": "service_uuids", "value": ["180d", "180f", "180a"]}
+  ],
+  "gatt": [
+    {"service": "1800", "characteristic": "2a00", "properties": ["read"], "handle": "0x0003"},
+    {"service": "1800", "characteristic": "2a01", "properties": ["read"], "handle": "0x0005"},
+    {"service": "180a", "characteristic": "2a29", "properties": ["read"], "handle": "0x000a"},
+    {"service": "180a", "characteristic": "2a24", "properties": ["read"], "handle": "0x000c"},
+    {"service": "180d", "characteristic": "2a37", "properties": ["notify"], "handle": "0x0012"},
+    {"service": "180f", "characteristic": "2a19", "properties": ["read", "notify"], "handle": "0x0016"}
+  ],
+  "smp": {
+    "method": "passkey_entry",
+    "io_capability": "DisplayOnly",
+    "mitm": true,
+    "secure_connections": false,
+    "bonding": true,
+    "max_enc_key_size": 16,
+    "oob": false
+  },
+  "att_ops": []
+}

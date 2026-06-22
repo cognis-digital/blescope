@@ -1,0 +1,32 @@
+{
+  "device": {
+    "name": "SlimType BT Keyboard",
+    "address": "F0:18:98:33:44:55",
+    "appearance": 961,
+    "tx_power": -4
+  },
+  "advertisements": [
+    {"type": "flags", "value": "0x05"},
+    {"type": "complete_local_name", "value": "SlimType BT Keyboard"},
+    {"type": "appearance", "value": "0x03C1"},
+    {"type": "service_uuids", "value": ["1812", "180a", "180f"]}
+  ],
+  "gatt": [
+    {"service": "1800", "characteristic": "2a00", "properties": ["read"], "handle": "0x0003"},
+    {"service": "1800", "characteristic": "2a01", "properties": ["read"], "handle": "0x0005"},
+    {"service": "180a", "characteristic": "2a29", "properties": ["read"], "handle": "0x000a"},
+    {"service": "180a", "characteristic": "2a25", "properties": ["read"], "handle": "0x000e"},
+    {"service": "180f", "characteristic": "2a19", "properties": ["read", "notify"], "handle": "0x0014"},
+    {"service": "1812", "characteristic": "2a4d", "properties": ["read", "notify"], "handle": "0x001a"}
+  ],
+  "smp": {
+    "method": "just_works",
+    "io_capability": "NoInputNoOutput",
+    "mitm": false,
+    "secure_connections": true,
+    "bonding": true,
+    "max_enc_key_size": 16,
+    "oob": false
+  },
+  "att_ops": []
+}

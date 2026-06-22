@@ -1,0 +1,25 @@
+# BLESCOPE text capture — DIY ESP32 garage-door relay
+# Recorded with a sniffer and hand-transcribed to the tolerant key:value form.
+# Each line is one observation; '#' lines are comments and are ignored.
+
+device.name: GarageRelay-ESP32
+device.address: 24:6F:28:11:44:77
+device.tx_power: 3
+
+# Advertised + discovered services
+service: 1815
+service: 180a
+
+# The Automation IO Digital characteristic drives the relay coil.
+char: 1815 2a56 read,write,notify
+
+# Security manager exchange — pairing was Just Works with a short key.
+smp.method: just_works
+smp.io_capability: NoInputNoOutput
+smp.mitm: false
+smp.secure_connections: false
+smp.max_enc_key_size: 7
+smp.bonding: true
+
+# The mobile app fires this plaintext write to toggle the door.
+write: 2a56 01

@@ -113,8 +113,9 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     scan.add_argument("capture", help="path to capture (JSON or text); '-' reads stdin")
     scan.add_argument(
-        "--format", choices=["table", "json"], default="table",
-        help="output format (default: table)",
+        "--format", choices=["table", "json", "sarif"], default="table",
+        help=("output format (default: table). 'sarif' emits a SARIF 2.1.0 log "
+              "for GitHub code-scanning and SAST dashboards."),
     )
     scan.add_argument(
         "--min-severity", choices=SEVERITY_ORDER, default="low",
@@ -158,6 +159,10 @@ def main(argv: Optional[list[str]] = None) -> int:
 
         if args.format == "json":
             print(json.dumps(result.to_dict(), indent=2))
+        elif args.format == "sarif":
+            source = None if args.capture == "-" else args.capture
+            print(json.dumps(
+                result.to_sarif(TOOL_NAME, TOOL_VERSION, source), indent=2))
         else:
             print(_render_table(result))
 

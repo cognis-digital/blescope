@@ -1,0 +1,16 @@
+{
+  "device": {
+    "name": "Aisle-7 Beacon",
+    "address": "E4:5F:01:55:66:77",
+    "appearance": 0,
+    "tx_power": -12
+  },
+  "advertisements": [
+    {"type": "flags", "value": "0x06"},
+    {"type": "complete_local_name", "value": "Aisle-7 Beacon"},
+    {"type": "service_uuids", "value": ["feaa"]},
+    {"type": "service_data", "value": "feaa-10-00-636f676e69732e64696769"}
+  ],
+  "gatt": [],
+  "att_ops": []
+}

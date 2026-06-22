@@ -36,12 +36,50 @@ Every field is optional; the engine degrades gracefully on partial captures.
 from __future__ import annotations
 
 import json
+import os
 import re
 from dataclasses import dataclass, field, asdict
 from typing import Any, Optional
 
+TOOL_NAME = "blescope"
+
+
+def _read_version() -> str:
+    """Tool version from the repo-root VERSION file, with a safe fallback."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    candidate = os.path.join(os.path.dirname(here), "VERSION")
+    try:
+        with open(candidate, "r", encoding="utf-8") as fh:
+            v = fh.read().strip()
+            if v:
+                return v
+    except OSError:
+        pass
+    return "0.6.0"
+
+
+TOOL_VERSION = _read_version()
+
 # Severity ordering, worst first. Used to rank findings and pick exit codes.
 SEVERITY_ORDER = ["critical", "high", "medium", "low", "info"]
+
+# BLE severity -> SARIF level (error/warning/note) for code-scanning dashboards.
+_SARIF_LEVEL = {
+    "critical": "error",
+    "high": "error",
+    "medium": "warning",
+    "low": "note",
+    "info": "note",
+}
+
+# BLE severity -> GitHub code-scanning numeric security-severity (CVSS-like).
+_SARIF_SECURITY_SEVERITY = {
+    "critical": "9.5",
+    "high": "8.0",
+    "medium": "5.5",
+    "low": "3.0",
+    "info": "0.0",
+}
 
 # ---------------------------------------------------------------------------
 # Well-known GATT UUID tables (16-bit assigned numbers, Bluetooth SIG).
@@ -169,6 +207,63 @@ class AnalysisResult:
             "findings": [f.to_dict() for f in self.findings],
             "worst_severity": self.worst_severity,
             "insecure": self.insecure(),
+        }
+
+    def to_sarif(self, tool_name: str, tool_version: str,
+                 source_path: Optional[str] = None) -> dict[str, Any]:
+        """Render the result as a SARIF 2.1.0 log (one run, one result per finding).
+
+        SARIF (Static Analysis Results Interchange Format) is the OASIS standard
+        consumed by GitHub code-scanning, Azure DevOps, and most SAST dashboards.
+        BLE severities map onto SARIF ``level`` as: critical/high -> ``error``,
+        medium -> ``warning``, low/info -> ``note``.
+        """
+        artifact_uri = source_path or f"{self.profile or 'unknown'}-capture.json"
+
+        # Stable rule catalogue derived from the findings actually present.
+        rules: list[dict[str, Any]] = []
+        seen_rules: set[str] = set()
+        results: list[dict[str, Any]] = []
+        for f in self.findings:
+            if f.id not in seen_rules:
+                seen_rules.add(f.id)
+                rules.append({
+                    "id": f.id,
+                    "name": f.id.replace("-", ""),
+                    "shortDescription": {"text": f.title},
+                    "fullDescription": {"text": f.detail},
+                    "defaultConfiguration": {"level": _SARIF_LEVEL.get(f.severity, "note")},
+                    "properties": {"security-severity": _SARIF_SECURITY_SEVERITY.get(f.severity, "0.0"),
+                                   "ble-severity": f.severity},
+                })
+            results.append({
+                "ruleId": f.id,
+                "level": _SARIF_LEVEL.get(f.severity, "note"),
+                "message": {"text": f"{f.title} — {f.detail}"},
+                "locations": [{
+                    "physicalLocation": {
+                        "artifactLocation": {"uri": artifact_uri},
+                    },
+                    "logicalLocations": [{
+                        "name": self.profile or "unknown",
+                        "kind": "namespace",
+                    }],
+                }],
+                "properties": {"evidence": f.evidence, "ble-severity": f.severity},
+            })
+
+        return {
+            "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+            "version": "2.1.0",
+            "runs": [{
+                "tool": {"driver": {
+                    "name": tool_name,
+                    "version": tool_version,
+                    "informationUri": "https://github.com/cognis-digital/blescope",
+                    "rules": rules,
+                }},
+                "results": results,
+            }],
         }
 
 
