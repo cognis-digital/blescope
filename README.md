@@ -118,7 +118,7 @@ python -m blescope scan demos/09-secure-lock/secure_deadbolt.json   # exits 0
 
 ## Contents
 
-- [Why blescope?](#why) · [Features](#features) · [Quick start](#quick-start) · [Example](#example) · [Architecture](#architecture) · [AI stack](#ai-stack) · [How it compares](#how-it-compares) · [Integrations](#integrations) · [Install anywhere](#install-anywhere) · [Related](#related) · [Contributing](#contributing)
+- [Why blescope?](#why) · [Features](#features) · [Quick start](#quick-start) · [Example](#example) · [Edge / air-gap](#edge) · [Architecture](#architecture) · [AI stack](#ai-stack) · [How it compares](#how-it-compares) · [Integrations](#integrations) · [Install anywhere](#install-anywhere) · [Related](#related) · [Contributing](#contributing)
 
 <a name="why"></a>
 ## Why blescope?
@@ -142,7 +142,7 @@ Smart-lock and wearable teardown culture — 'this $200 lock pairs Just-Works an
 - ✅ CI-ready exit codes with a `--min-severity` gate
 - ✅ **Passive by default** (offline); optional **authorization-gated active** live pull (`scan-live`, OFF by default, scope-enforced, rate-limited)
 - ✅ Runs on Linux/macOS/Windows · Docker · devcontainer
-- ✅ Ports in Python, JavaScript, TypeScript, Go, and Rust (`ports/`) — passive core, CI-built
+- ✅ Ports in Python, JavaScript, TypeScript, Go, Rust, **Perl, Ruby, and Shell+awk** (`ports/`) — passive core, CI-built, finding-ID parity verified against the reference
 
 <div align="right"><a href="#top">↑ back to top</a></div>
 
@@ -182,6 +182,71 @@ VERDICT: INSECURE   (worst severity: critical)
 ------------------------------------------------------------
 ```
 
+### JSON output (for piping / dashboards)
+
+```bash
+$ blescope scan demos/01-basic/frontdoor_lock.json --format json | jq '.profile, .insecure, [.findings[].id]'
+"smart_lock"
+true
+[
+  "SMP-JUSTWORKS",
+  "ATT-PLAINTEXT-CTRL",
+  "SMP-LEGACY",
+  "SMP-WEAKKEY",
+  "GATT-UNAUTH-WRITE",
+  "SMP-IOCAP",
+  "SMP-WEAKBOND"
+]
+```
+
+### SARIF output (for GitHub code-scanning)
+
+`--format sarif` emits a SARIF 2.1.0 log: BLE severities map to `error`/`warning`/`note`,
+each rule carries a CVSS-like `security-severity`, and the result is uploadable straight
+to GitHub code-scanning.
+
+```bash
+$ blescope scan demos/01-basic/frontdoor_lock.json --format sarif | \
+    jq '.runs[0].results[0] | {ruleId, level, security: .properties["ble-severity"]}'
+{
+  "ruleId": "SMP-JUSTWORKS",
+  "level": "error",
+  "security": "critical"
+}
+```
+
+```yaml
+# .github/workflows/ble-audit.yml — gate a PR on BLE captures
+- run: pip install cognis-blescope
+- run: blescope scan captures/device.json --format sarif > blescope.sarif
+- uses: github/codeql-action/upload-sarif@v3
+  with: { sarif_file: blescope.sarif }
+```
+
+<div align="right"><a href="#top">↑ back to top</a></div>
+
+<a name="edge"></a>
+## Edge / air-gap
+
+`blescope` is built to run where there is no internet:
+
+- **Zero network, zero telemetry.** The passive engine reads a local capture and
+  nothing else — no feed fetch, no phone-home, no external lookups. UUID names,
+  profile fingerprints, and pairing rules are all **bundled in the code**.
+- **Stdlib-only Python core.** No third-party runtime dependency to vendor.
+- **Most-portable ports for locked-down boxes.** The **Perl** port needs only the
+  core `JSON::PP` (ships with Perl 5); the **Shell+awk** port needs only a POSIX
+  shell and `awk`. Both are present on essentially every Unix host out of the box,
+  so you can drop a single file onto an air-gapped analyst workstation and audit a
+  capture with **nothing to install**.
+- **Single-file deploy.** Copy `ports/perl/blescope.pl` or `ports/shell/blescope.sh`
+  (+ `blescope.awk`) and run — no package manager, no virtualenv.
+
+> blescope does **not** consume any external vulnerability/threat feed: its
+> findings come entirely from the BLE/SMP specification rules and the Bluetooth SIG
+> assigned-numbers tables compiled into the tool, so results are identical online
+> or offline.
+
 <div align="right"><a href="#top">↑ back to top</a></div>
 
 <a name="architecture"></a>
@@ -216,7 +281,8 @@ flowchart LR
 | Single command, zero config | ✅ | ⚠️ |
 | JSON + SARIF for CI | ✅ | varies |
 | MCP-native (AI agents) | ✅ | ❌ |
-| Polyglot ports (JS/Go/Rust) | ✅ | ❌ |
+| Polyglot ports (JS/TS/Go/Rust/Perl/Ruby/Shell) | ✅ | ❌ |
+| Air-gap single-file deploy | ✅ | ⚠️ |
 | Open license | ✅ COCL | varies |
 
 *Built in the spirit of **Sniffle + gattacker**, re-framed the Cognis way. Missing a credit? Open a PR.*
@@ -270,9 +336,28 @@ PRs, new rules, and demo scenarios are welcome under the collaboration-pull mode
 
 > ### ⭐ If `blescope` saved you time, **star it** — it genuinely helps others find it.
 
+## Scope, authorization & safety
+
+`blescope` is a **defensive, authorized-use** tool for engineers, researchers, and
+security teams auditing devices **they own or are explicitly permitted to test**.
+
+- **Passive by default.** `blescope scan` only reads a capture you already have. It
+  never opens a radio, never contacts a network, and is what runs in CI.
+- **Active mode is a hard opt-in.** `blescope scan-live` is **OFF by default** and
+  refuses to run without `--authorized` **and** a non-empty `--target-allowlist`.
+  Devices not on the allowlist are skipped, never probed; every probe is
+  rate-limited; a loud "AUTHORIZED USE ONLY" banner prints first.
+- **Read-only probes, no exploitation.** Active mode enumerates GATT and inspects
+  pairing posture — it sends **no exploit payloads, no auth-bypass, no actuation
+  writes**. It reports risk; it does not attack.
+- **No fabricated data.** With no real BLE backend wired in, blescope **refuses
+  rather than invent** device data. Tests use only local fixtures / `MockScanner`.
+- **You are responsible** for ensuring you have permission. Active scanning of
+  third-party devices may be illegal in your jurisdiction.
+
 ## Interoperability
 
-`{}` composes with the 300+ tool Cognis suite — JSON in/out and a shared
+`blescope` composes with the 300+ tool Cognis suite — JSON in/out and a shared
 OpenAI-compatible `/v1` backbone. See **[INTEROP.md](INTEROP.md)** for the
 suite map, composition patterns, and reference stacks.
 

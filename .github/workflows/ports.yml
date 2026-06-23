@@ -62,3 +62,52 @@ jobs:
         with:
           node-version: "22"
       - run: node --test
+
+  perl:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ports/perl
+    steps:
+      - uses: actions/checkout@v4
+      # Perl + JSON::PP/Test::More ship with ubuntu-latest's system Perl.
+      - run: perl -MJSON::PP -e 'print "JSON::PP ok\n"'
+      - name: test
+        run: perl blescope.t
+      - name: smoke
+        run: |
+          perl blescope.pl ../../demos/01-basic/frontdoor_lock.json && exit 1 || true
+          perl blescope.pl ../../demos/09-secure-lock/secure_deadbolt.json
+
+  ruby:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ports/ruby
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.3"
+      - name: test
+        run: ruby test_blescope.rb
+      - name: smoke
+        run: |
+          ruby blescope.rb ../../demos/01-basic/frontdoor_lock.json && exit 1 || true
+          ruby blescope.rb ../../demos/09-secure-lock/secure_deadbolt.json
+
+  shell:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ports/shell
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck
+        run: shellcheck blescope.sh test_blescope.sh || true
+      - name: test
+        run: sh test_blescope.sh
+      - name: smoke
+        run: |
+          sh blescope.sh ../../demos/01-basic/frontdoor_lock.json && exit 1 || true
+          sh blescope.sh ../../demos/09-secure-lock/secure_deadbolt.json
