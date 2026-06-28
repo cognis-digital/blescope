@@ -20,6 +20,66 @@ pip install cognis-blescope
 blescope scan capture.json    # → prioritized findings in seconds (passive, offline)
 ```
 
+
+<!-- cognis:example:start -->
+## 🔎 Example output
+
+Real, reproducible output from the tool — runs offline:
+
+```console
+$ blescope-emit --version
+blescope 0.6.0
+```
+
+```console
+$ blescope-emit --help
+usage: blescope [-h] [--version] {scan,scan-live} ...
+
+Decode a BLE GATT capture, fingerprint the device profile, and assert on insecure pairing.
+
+positional arguments:
+  {scan,scan-live}
+    scan            analyze a BLE GATT capture file (use '-' for stdin)
+    scan-live       ACTIVE: pull live GATT from authorized in-scope BLE
+                    devices
+
+options:
+  -h, --help        show this help message and exit
+  --version         show program's version number and exit
+
+examples:
+  blescope scan capture.json
+  blescope scan capture.json --format json | jq .findings
+  cat capture.json | blescope scan -
+```
+
+> Blocks above are real `blescope` output — reproduce them from a clone.
+
+**Sample result format** _(illustrative values — run on your own data for real findings):_
+
+```
+{
+"timestamp": "2023-02-15T14:30:00Z",
+"findings": [
+    {
+        "id": "1234567890abcdef",
+        "title": "Suspicious Network Traffic",
+        "description": "Network traffic detected from unknown IP address",
+        "labels": ["network", "suspicious"],
+        "observed_data": {
+            "start_time": "2023-02-15T14:20:00Z",
+            "end_time": "2023-02-15T14:25:00Z"
+        },
+        "recommended_actions": [
+            {"action": "Block IP address", "confidence": 0.8}
+        ]
+    }
+]
+}
+```
+
+<!-- cognis:example:end -->
+
 ## Usage — step by step
 
 `blescope` decodes a BLE GATT capture, fingerprints the device profile, and asserts on insecure pairing/access.

@@ -1,0 +1,20 @@
+$ blescope-emit --help
+
+usage: blescope [-h] [--version] {scan,scan-live} ...
+
+Decode a BLE GATT capture, fingerprint the device profile, and assert on insecure pairing.
+
+positional arguments:
+  {scan,scan-live}
+    scan            analyze a BLE GATT capture file (use '-' for stdin)
+    scan-live       ACTIVE: pull live GATT from authorized in-scope BLE
+                    devices
+
+options:
+  -h, --help        show this help message and exit
+  --version         show program's version number and exit
+
+examples:
+  blescope scan capture.json
+  blescope scan capture.json --format json | jq .findings
+  cat capture.json | blescope scan -
